@@ -196,7 +196,7 @@ class BlogTest extends TestCase
             ->assertDontSee($user3->name);
     }
 
-        /**
+    /**
      * Ensure that the promoted posts page contains only promoted posts.
      */
     public function testPromotedPostsPageContainsOnlyPromotedPosts()
@@ -386,11 +386,30 @@ class BlogTest extends TestCase
             ->assertDontSee($comment->body);
     }
 
-    /**
-     * TOD:Ensure that blog posts page has pagination.
-     */
     public function testBlogPostsPageHasPagination()
     {
-        $this->markTestIncomplete();
+        $user = User::factory()->create();
+
+        Post::factory()->count(15)->create([
+            'user_id' => $user->id,
+            'published_at' => now(),
+            'image' => 'image.jpg',
+        ]);
+
+
+        // Επισκεπτόμαστε τη σελίδα των posts
+        $response = $this->get(route('posts')); // ή '/posts' αν δεν έχεις ονομασία στη route
+
+        // Επιβεβαιώνουμε ότι η σελίδα φορτώνει επιτυχώς
+        $response->assertStatus(200);
+
+        // Επιβεβαιώνουμε ότι βλέπουμε μόνο 9 posts (όσα ανά σελίδα)
+        $response->assertSeeInOrder(
+            Post::orderByDesc('promoted')->orderByDesc('published_at')->limit(9)->pluck('title')->toArray()
+        );
+
+        // Ελέγχουμε ότι υπάρχουν στοιχεία pagination στο HTML (π.χ. το κουμπί "Επόμενο")
+        $response->assertSee('Next'); // ή κάτι ανάλογο που υπάρχει στο pagination view
     }
+
 }
